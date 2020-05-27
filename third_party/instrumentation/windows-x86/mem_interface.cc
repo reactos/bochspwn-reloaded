@@ -54,7 +54,7 @@ next_page:
   if (remainsInPage < len) {
     laddr += read_len;
     len -= read_len;
-    buf += read_len;
+    unsigned(buf) = unsigned(buf) + read_len;
     goto next_page;
   }
 
@@ -84,7 +84,7 @@ next_page:
   if (remainsInPage < len) {
     laddr += read_len;
     len -= read_len;
-    buf += read_len;
+    unsigned(buf) = unsigned(buf) + read_len;
     goto next_page;
   }
 

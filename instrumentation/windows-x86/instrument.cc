@@ -26,6 +26,7 @@
 #include "bochs.h"
 #include "cpu/cpu.h"
 #include "disasm/disasm.h"
+#include "cpu/decoder/ia_opcodes.h"
 
 #include "breakpoints.h"
 #include "common.h"
@@ -58,68 +59,69 @@ static void parse_offset_list(char *buffer, std::vector<uint32_t> *v) {
 
 static bool init_basic_config(const char *config_path, bochspwn_config *config) {
   static char buffer[256];
+  const char *section = "general";
 
   // Output file path.
-  READ_INI_STRING(config_path, "general", "log_path", buffer, sizeof(buffer));
+  READ_INI_STRING(config_path, section, "log_path", buffer, sizeof(buffer));
   config->log_path = strdup(buffer);
 
   // System version.
-  READ_INI_STRING(config_path, "general", "version", buffer, sizeof(buffer));
+  READ_INI_STRING(config_path, section, "version", buffer, sizeof(buffer));
   config->os_version = strdup(buffer);
 
   // Maximum length of callstack.
-  READ_INI_INT(config_path, "general", "callstack_length", buffer, sizeof(buffer),
+  READ_INI_INT(config_path, section, "callstack_length", buffer, sizeof(buffer),
                &config->callstack_length);
 
   // Symbolization settings.
-  READ_INI_INT(config_path, "general", "symbolize", buffer, sizeof(buffer),
+  READ_INI_INT(config_path, section, "symbolize", buffer, sizeof(buffer),
                &config->symbolize);
-  READ_INI_STRING(config_path, "general", "symbol_path", buffer, sizeof(buffer));
+  READ_INI_STRING(config_path, section, "symbol_path", buffer, sizeof(buffer));
   config->symbol_path = strdup(buffer);
 
   // Read the pools-tainting setting.
-  READ_INI_INT(config_path, "general", "taint_pools", buffer, sizeof(buffer),
+  READ_INI_INT(config_path, section, "taint_pools", buffer, sizeof(buffer),
                &config->taint_pools);
 
   // Read the stack-tainting setting.
-  READ_INI_INT(config_path, "general", "taint_stack", buffer, sizeof(buffer),
+  READ_INI_INT(config_path, section, "taint_stack", buffer, sizeof(buffer),
                &config->taint_stack);
 
   // Read the origin tracking setting.
-  READ_INI_INT(config_path, "general", "track_origins", buffer, sizeof(buffer),
+  READ_INI_INT(config_path, section, "track_origins", buffer, sizeof(buffer),
                &config->track_origins);
 
   // Comma-separated list of pool allocation routine offsets.
   std::vector<uint32_t> pool_allocs;
-  READ_INI_STRING(config_path, "general", "pool_allocs", buffer, sizeof(buffer));
+  READ_INI_STRING(config_path, section, "pool_allocs", buffer, sizeof(buffer));
   parse_offset_list(buffer, &pool_allocs);
   set_breakpoints_bulk(pool_allocs, BP_POOL_ALLOC);
 
   // Comma-separated list of pool deallocation routine offsets.
   std::vector<uint32_t> pool_frees;
-  READ_INI_STRING(config_path, "general", "pool_frees", buffer, sizeof(buffer));
+  READ_INI_STRING(config_path, section, "pool_frees", buffer, sizeof(buffer));
   parse_offset_list(buffer, &pool_frees);
   set_breakpoints_bulk(pool_frees, BP_POOL_FREE);
 
   // Read the uniquization setting.
-  READ_INI_INT(config_path, "general", "uniquize", buffer, sizeof(buffer), &config->uniquize);
+  READ_INI_INT(config_path, section, "uniquize", buffer, sizeof(buffer), &config->uniquize);
 
   // Read the break-on-bug setting.
-  READ_INI_INT(config_path, "general", "break_on_bug", buffer, sizeof(buffer), &config->break_on_bug);
+  READ_INI_INT(config_path, section, "break_on_bug", buffer, sizeof(buffer), &config->break_on_bug);
 
   // Read the only-kernel-to-user setting.
-  READ_INI_INT(config_path, "general", "only_kernel_to_user", buffer, sizeof(buffer),
+  READ_INI_INT(config_path, section, "only_kernel_to_user", buffer, sizeof(buffer),
                &config->only_kernel_to_user);
 
   // Read the state-dumping settings.
-  READ_INI_INT(config_path, "general", "dump_shadow_to_files", buffer, sizeof(buffer),
+  READ_INI_INT(config_path, section, "dump_shadow_to_files", buffer, sizeof(buffer),
                &config->dump_shadow_to_files);
 
   if (config->dump_shadow_to_files != 0) {
-    READ_INI_INT(config_path, "general", "dump_shadow_interval", buffer, sizeof(buffer),
+    READ_INI_INT(config_path, section, "dump_shadow_interval", buffer, sizeof(buffer),
                  &config->dump_shadow_interval);
 
-    READ_INI_STRING(config_path, "general", "dump_shadow_path", buffer, sizeof(buffer));
+    READ_INI_STRING(config_path, section, "dump_shadow_path", buffer, sizeof(buffer));
     config->dump_shadow_path = strdup(buffer);
   }
 
@@ -201,7 +203,7 @@ static std::string bug_report_as_text(const bug_report_t& bug_report) {
   return ret;
 }
 
-__attribute__((noinline))
+__declspec(noinline)
 static void process_mem_access(BX_CPU_C *pcpu, bx_address lin, unsigned len,
                                bx_address pc, bug_report_t::mem_access_type access_type,
                                char *disasm, bool kernel_to_user, uint32_t copy_dest_address,

@@ -26,6 +26,8 @@
 #include "instrument.h"
 #include "logging.pb.h"
 
+using namespace std;
+
 // ------------------------------------------------------------------
 // Configuration data, for detailed information see os_windows.h.
 // ------------------------------------------------------------------
@@ -244,7 +246,7 @@ module_info *update_module_list(BX_CPU_C *pcpu, bx_address pc) {
       for (unsigned i = 0; i < half_fetch && i < sizeof(module_name) - 1; i++) {
         module_name[i] = unicode_name[i];
       }
-      module_name[std::min(half_fetch, sizeof(module_name) - 1)] = '\0';
+      module_name[min(half_fetch, sizeof(module_name) - 1)] = '\0';
 
       // Add to cache for future reference.
       module_info *mi = new module_info(base, imagesize, module_name);

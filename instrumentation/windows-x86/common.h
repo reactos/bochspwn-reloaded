@@ -104,7 +104,7 @@ struct bochspwn_config {
 
   // Initialize fields with typical values for safety.
   bochspwn_config() : log_path(strdup("memlog.bin")), file_handle(NULL),
-                      os_version(strdup("win7_32")), callstack_length(64),
+                      os_version(strdup("reactos_32")), callstack_length(64),
                       symbolize(0), symbol_path(NULL), taint_pools(1),
                       taint_stack(0), track_origins(0), uniquize(0),
                       break_on_bug(0), only_kernel_to_user(0),
