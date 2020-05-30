@@ -12,6 +12,7 @@ taint_pools          = 1
 taint_stack          = 1
 track_origins        = 1
 
+; ReactOS Version 0.4.15-dev 
 pool_allocs          = 0xBC2E6
 pool_frees           = 0xBC3A0
 
