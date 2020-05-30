@@ -413,6 +413,13 @@ void bx_instr_lin_access(unsigned cpu, bx_address lin, bx_address phy,
     bool dst_in_kernel = windows::check_kernel_addr(pcpu->gen_reg[BX_32BIT_REG_EDI].dword.erx);
     bool src_in_kernel = windows::check_kernel_addr(pcpu->gen_reg[BX_32BIT_REG_ESI].dword.erx);
 
+    // Get DF flag from EFLAGS register
+    bool df = (pcpu->eflags >> 10) & 1;
+    if (df) {
+      // Fix buffers overlap
+      lin -= len;
+    }
+
     // One of dst/src must be kernel-mode for it to be interesting.
     if (!dst_in_kernel && !src_in_kernel) {
       return;

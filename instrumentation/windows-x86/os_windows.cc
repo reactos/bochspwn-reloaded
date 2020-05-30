@@ -202,6 +202,15 @@ module_info *update_module_list(BX_CPU_C *pcpu, bx_address pc) {
 
   // Iterate through driver information found in the kernel memory.
   uint32_t addr_module_start = addr_module;
+
+  // The first LDR_MODULE element is null, don't know why :( So I must go to the next element
+  // to make it can find ntoskrnl.exe
+  if (!read_lin_mem(pcpu, addr_module + off_loadorder_flink, sizeof(addr_module), &addr_module) ||
+      !check_kernel_addr(addr_module)) {
+    return NULL;
+  }
+  addr_module -= off_loadorder_flink;
+
   for (;;) {
     // Grab the base and image size.
     uint32_t base = 0;
@@ -256,7 +265,9 @@ module_info *update_module_list(BX_CPU_C *pcpu, bx_address pc) {
       if (!strcmp(module_name, "ntoskrnl.exe") || !strcmp(module_name, "win32k.sys")) {
         globals::special_modules.push_back(mi);
       } else {
-        globals::modules.push_back(mi);
+        if (!find_module(pc)) {
+          globals::modules.push_back(mi);
+        }
       }
 
       return mi;
