@@ -75,11 +75,36 @@ std::string symbolize(const std::string& module, uint32_t offset) {
 
   symbol_info_package sip;
   uint64_t displacement = 0;
+  uint64_t addr = module_base + offset;
+  DWORD displacement2 = 0;
+  DWORD inline_ctx, idx;
+  bool done = false;
+  IMAGEHLP_LINE line;
+  line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
 
-  if (!SymFromAddr(GetCurrentProcess(), module_base + offset, &displacement, &sip.si)) {
+  if (!SymFromAddr(GetCurrentProcess(), addr, &displacement, &sip.si)) {
     snprintf(buffer, sizeof(buffer), "%s+%x", module.c_str(), offset);
-  } else {
-    snprintf(buffer, sizeof(buffer), "%s!%s+%.8llx", module.c_str(), sip.si.Name, displacement);
+  }
+  else {
+    if (SymAddrIncludeInlineTrace(GetCurrentProcess(), addr)) {
+      if (SymQueryInlineTrace(GetCurrentProcess(), addr, 0, addr, addr, &inline_ctx, &idx)) {
+        done = SymGetLineFromInlineContext(GetCurrentProcess(), addr, inline_ctx, 0, &displacement2, &line);
+      }
+      else {
+        fprintf(stderr, "SymQueryInlineTrace failed, %lu\n", GetLastError());
+      }
+    }
+    else {
+      done = SymGetLineFromAddr(GetCurrentProcess(), addr, &displacement2, &line);
+    }
+
+    if (!done) {
+      snprintf(buffer, sizeof(buffer), "%s!%s+%x", module.c_str(), sip.si.Name, displacement);
+    }
+    else {
+      snprintf(buffer, sizeof(buffer), "%s!%s+%x [%s @ %d]", module.c_str(), sip.si.Name,
+        displacement, line.FileName, line.LineNumber);
+    }
   }
 
   return std::string(buffer);
